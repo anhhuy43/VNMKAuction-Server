@@ -66,6 +66,9 @@ class PostController {
     try {
       const postId = req.params.id;
       console.log("🚀 ~ PostController ~ postDetail ~ postId:", postId);
+      const token = req.headers.authorization?.split(" ")[1]
+      const decode = jwt.decode(token, authConstant.JWT_SECRET_KEY)
+      const currentUserId = decode.userId
 
       // Tìm bài post trong database
       const post = await Post.findOne({ _id: postId, isDeleted: false })
@@ -75,6 +78,8 @@ class PostController {
       if (!post) {
         return res.status(404).json({ message: "Post not found" });
       }
+
+      const isOwner = post.userId._id.toString() === currentUserId
 
       const images = post.images.map(
         (image) => `${req.protocol}://${req.get("host")}${image}`
@@ -115,6 +120,7 @@ class PostController {
       // Trả dữ liệu về frontend
       res.status(200).json({
         post: { ...post.toObject(), images, endTime: post.endTime },
+        isOwner: isOwner,
         comments: commentsWithUser,
         highestBid: highestBid, // Giá trị bid cao nhất
         highestBidder: highestBidder ? highestBidder.toObject() : null, // Thông tin người bid cao nhất
