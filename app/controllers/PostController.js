@@ -48,7 +48,7 @@ class PostController {
         return res.status(401).json({ message: "Token Not Found" });
       }
 
-      const decode = jwt.decode(token, authConstant.JWT_SECRET_KEY);
+      const decode = jwt.decode(token, process.env.JWT_SECRET_KEY);
 
       const myListPosts = await Post.find({
         userId: decode.userId,
@@ -66,9 +66,9 @@ class PostController {
     try {
       const postId = req.params.id;
       console.log("🚀 ~ PostController ~ postDetail ~ postId:", postId);
-      const token = req.headers.authorization?.split(" ")[1]
-      const decode = jwt.decode(token, authConstant.JWT_SECRET_KEY)
-      const currentUserId = decode.userId
+      const token = req.headers.authorization?.split(" ")[1];
+      const decode = jwt.decode(token, process.env.JWT_SECRET_KEY);
+      const currentUserId = decode.userId;
 
       // Tìm bài post trong database
       const post = await Post.findOne({ _id: postId, isDeleted: false })
@@ -79,7 +79,7 @@ class PostController {
         return res.status(404).json({ message: "Post not found" });
       }
 
-      const isOwner = post.userId._id.toString() === currentUserId
+      const isOwner = post.userId._id.toString() === currentUserId;
 
       const images = post.images.map(
         (image) => `${req.protocol}://${req.get("host")}${image}`
@@ -136,7 +136,7 @@ class PostController {
     try {
       const { name, description, startTime, endTime, startingPrice } = req.body;
       const token = req.headers.authorization?.split(" ")[1];
-      const decode = jwt.decode(token, authConstant.JWT_SECRET_KEY);
+      const decode = jwt.decode(token, process.env.JWT_SECRET_KEY);
 
       if (!startingPrice || isNaN(startingPrice) || startingPrice < 0) {
         return res.status(400).json({
@@ -319,7 +319,12 @@ class PostController {
       const searchNoSpecialChar = searchTerm.replace(/[^a-zA-Z0-9 ]/g, ""); // Xử lý ký tự đặc biệt
 
       const data = await Post.find({
-        $or: [{ name: { $regex: new RegExp(searchNoSpecialChar, "i") } }],
+        $and: [
+          { isDeleted: false },
+          {
+            $or: [{ name: { $regex: new RegExp(searchNoSpecialChar, "i") } }],
+          },
+        ],
       });
 
       console.log("🚀 ~ PostController ~ search ~ data:", data);
@@ -365,8 +370,8 @@ class PostController {
         return res.status(404).json({ message: "Post not found" });
       }
 
-      post.feedback = null; // Xóa feedback
-      post.isBlurred = false; // Mở khóa bài viết
+      post.feedback = null;
+      post.isBlurred = false;
       await post.save();
 
       res.status(200).json({ message: "Feedback removed successfully", post });

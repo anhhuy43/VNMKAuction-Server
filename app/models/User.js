@@ -8,15 +8,14 @@ mongoose.plugin(slug);
 const User = new Schema({
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },
-  email: { type: String, required: true, unique: true }, // Email phải là duy nhất
+  email: { type: String, required: true, unique: true }, 
   password: { type: String, required: true },
-  role: { type: String, enum: ['user', 'admin'], default: 'user' }, // Thêm vai trò (user hoặc admin)
-  isActive: { type: Boolean, default: true }, // Trạng thái tài khoản (active/inactive)
-  createdAt: { type: Date, default: Date.now }, // Thời gian tạo tài khoản
-  updatedAt: { type: Date, default: Date.now }, // Thời gian cập nhật tài khoản
+  role: { type: String, enum: ['user', 'admin'], default: 'user' }, 
+  isActive: { type: Boolean, default: true }, 
+  createdAt: { type: Date, default: Date.now }, 
+  updatedAt: { type: Date, default: Date.now }, 
 });
 
-// Middleware để cập nhật `updatedAt` mỗi khi tài liệu được sửa đổi
 User.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();

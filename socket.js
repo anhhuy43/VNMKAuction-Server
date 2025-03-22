@@ -1,11 +1,11 @@
 const { Server } = require("socket.io");
 
-let io; // Biến để lưu WebSocket server
+let io; 
 
 function initializeSocket(server) {
   io = new Server(server, {
     cors: {
-      origin: "*", // Cấu hình CORS (tùy vào frontend)
+      origin: "*", 
     },
   });
 

@@ -1,9 +1,10 @@
 const mongoose = require('mongoose')
+require('dotenv').config()
 
 async function connect() {
 
   try {
-    await mongoose.connect('mongodb+srv://anhhuy:knK9PpI3WLAEtvvj@vnmk.rn2rdvk.mongodb.net/VNMK?retryWrites=true&w=majority&appName=VNMK');
+    await mongoose.connect(process.env.MONGO_URI);
     console.log('Connect succesfully!!!')
   } catch (error) {
     console.log('Connect failure!!!')

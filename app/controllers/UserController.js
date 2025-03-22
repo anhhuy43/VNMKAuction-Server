@@ -7,44 +7,97 @@ const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 const jwt = require("jsonwebtoken");
 const authConstant = require("../../constants/authConstant");
+require('dotenv').config();
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
 dayjs.extend(timezone);
 
 class UserController {
+  // async login(req, res, next) {
+  //   try {
+  //     const foundUser = await User.findOne({ email: req.body.email });
+
+  //     if (!foundUser) {
+  //       return res.status(404).json({
+  //         success: false,
+  //         message: "User Not Found!",
+  //       });
+  //     } else {
+  //       //compare the hash password from the database with the plain text
+  //       const isPasswordMatch = await bcrypt.compare(
+  //         req.body.password,
+  //         foundUser.password
+  //       );
+
+  //       if (isPasswordMatch) {
+  //         const token = jwt.sign(
+  //           { userId: foundUser._id.toString() },
+  //           authConstant.JWT_SECRET_KEY
+  //         );
+
+  //         return res.status(200).json({
+  //           success: true,
+  //           message: "Login Successful",
+  //           token,
+  //         });
+  //       } else {
+  //         return res.status(401).json({
+  //           success: false,
+  //           message: "Wrong Password",
+  //         });
+  //       }
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     return res.status(500).json({
+  //       success: false,
+  //       message: "Server error",
+  //     });
+  //   }
+  // }
+
   async login(req, res, next) {
     try {
       const foundUser = await User.findOne({ email: req.body.email });
 
+      // Kiểm tra nếu user không tồn tại
       if (!foundUser) {
         return res.status(404).json({
           success: false,
-          message: "User not found",
+          message: "User Not Found!",
         });
-      } else {
-        //compare the hash password from the database with the plain text
-        const isPasswordMatch = await bcrypt.compare(
-          req.body.password,
-          foundUser.password
+      }
+
+      // Kiểm tra role của user
+      if (foundUser.role !== "user") {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: Not A User!",
+        });
+      }
+
+      // So sánh mật khẩu
+      const isPasswordMatch = await bcrypt.compare(
+        req.body.password,
+        foundUser.password
+      );
+
+      if (isPasswordMatch) {
+        const token = jwt.sign(
+          { userId: foundUser._id.toString(), role: foundUser.role },
+          process.env.JWT_SECRET_KEY
         );
 
-        if (isPasswordMatch) {
-          const token = jwt.sign(
-            { userId: foundUser._id.toString() },
-            authConstant.JWT_SECRET_KEY
-          );
-
-          return res.status(200).json({
-            success: true,
-            message: "Login Successful",
-            token,
-          });
-        } else {
-          return res.status(401).json({
-            success: false,
-            message: "Wrong Password",
-          });
-        }
+        return res.status(200).json({
+          success: true,
+          message: "Login Successful",
+          token,
+        });
+      } else {
+        return res.status(401).json({
+          success: false,
+          message: "Wrong Password",
+        });
       }
     } catch (err) {
       console.error(err);
@@ -71,14 +124,14 @@ class UserController {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "User already exists",
+        message: "User Already Exists!",
       });
     }
 
     // Mã hóa mật khẩu
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(formData1.password, saltRounds);
-    formData1.password = hashedPassword; // Thay thế mật khẩu bằng mật khẩu đã mã hóa
+    formData1.password = hashedPassword;
 
     const user = new User(formData1);
     user
@@ -100,7 +153,7 @@ class UserController {
         return res.status(401).json({ message: "Token Not Found" });
       }
 
-      const decode = jwt.decode(token, authConstant.JWT_SECRET_KEY);
+      const decode = jwt.decode(token, process.env.JWT_SECRET_KEY);
 
       const userDetail = await User.findOne({ _id: decode.userId }).lean();
 
@@ -124,7 +177,7 @@ class UserController {
         return res.status(401).json({ message: "Token Not Found" });
       }
 
-      const decode = jwt.decode(token, authConstant.JWT_SECRET_KEY);
+      const decode = jwt.decode(token, process.env.JWT_SECRET_KEY);
 
       const userDetail = await User.findOne({ _id: decode.userId }).lean();
 
@@ -164,7 +217,7 @@ class UserController {
         return res.status(401).json({ message: "Token Not Found" });
       }
 
-      const decode = jwt.decode(token, authConstant.JWT_SECRET_KEY);
+      const decode = jwt.decode(token, process.env.JWT_SECRET_KEY);
 
       const foundUser = await User.findOne({ _id: decode.userId });
 
