@@ -1,12 +1,10 @@
 const User = require("../models/User");
-const { mongooseToObject } = require("../../util/mongoose");
 const bcrypt = require("bcrypt");
 const dayjs = require("dayjs");
 const customParseFormat = require("dayjs/plugin/customParseFormat");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 const jwt = require("jsonwebtoken");
-const authConstant = require("../../constants/authConstant");
 require('dotenv').config();
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);

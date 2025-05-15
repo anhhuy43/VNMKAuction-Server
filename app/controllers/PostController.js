@@ -1,14 +1,11 @@
 const Post = require("../models/Post");
 const Comment = require("../models/Comment");
 const User = require("../models/User");
-const { mongooseToObject } = require("../../util/mongoose");
-const { multipleMongooseToObject } = require("../../util/mongoose");
 const dayjs = require("dayjs");
 const customParseFormat = require("dayjs/plugin/customParseFormat");
 const utc = require("dayjs/plugin/utc");
 const jwt = require("jsonwebtoken");
 const timezone = require("dayjs/plugin/timezone");
-const authConstant = require("../../constants/authConstant");
 const { getSocketIO } = require("../../socket");
 dayjs.extend(utc);
 dayjs.extend(customParseFormat);
@@ -30,7 +27,7 @@ class PostController {
         return {
           ...post.toObject(),
           images,
-          user: post.userId, // Thông tin người đăng (name, email)
+          user: post.userId,
         };
       });
 
@@ -70,7 +67,6 @@ class PostController {
       const decode = jwt.decode(token, process.env.JWT_SECRET_KEY);
       const currentUserId = decode.userId;
 
-      // Tìm bài post trong database
       const post = await Post.findOne({ _id: postId, isDeleted: false })
         .populate("userId", "firstName lastName email")
         .exec();
@@ -85,31 +81,28 @@ class PostController {
         (image) => `${req.protocol}://${req.get("host")}${image}`
       );
 
-      // Lấy danh sách comment liên quan đến bài post
       const comments = await Comment.find({ postId }).sort({ createAt: -1 });
 
-      // Tìm bid cao nhất (nếu có comment)
       let highestBid = null;
       let highestBidder = null;
 
       if (comments.length > 0) {
         const sortedBids = comments
-          .filter((comment) => !isNaN(comment.contentBid)) // Chỉ lấy những comment có giá trị bid hợp lệ
-          .sort((a, b) => b.contentBid - a.contentBid); // Sắp xếp giảm dần theo contentBid
+          .filter((comment) => !isNaN(comment.contentBid)) 
+          .sort((a, b) => b.contentBid - a.contentBid); 
 
         if (sortedBids.length > 0) {
-          highestBid = sortedBids[0].contentBid; // Giá trị bid cao nhất
-          highestBidder = await User.findOne({ _id: sortedBids[0].userId }); // Lấy thông tin người bid cao nhất
+          highestBid = sortedBids[0].contentBid; 
+          highestBidder = await User.findOne({ _id: sortedBids[0].userId }); 
         }
       }
 
-      // Định dạng lại comment kèm thông tin user
       const commentsWithUser = await Promise.all(
         comments.map(async (comment) => {
           const user = await User.findOne(
             { _id: comment.userId },
             "firstName lastName"
-          ); // Lấy thông tin user
+          );
           return {
             ...comment.toObject(),
             user: user ? user.toObject() : null,
@@ -117,13 +110,12 @@ class PostController {
         })
       );
 
-      // Trả dữ liệu về frontend
       res.status(200).json({
         post: { ...post.toObject(), images, endTime: post.endTime },
         isOwner: isOwner,
         comments: commentsWithUser,
-        highestBid: highestBid, // Giá trị bid cao nhất
-        highestBidder: highestBidder ? highestBidder.toObject() : null, // Thông tin người bid cao nhất
+        highestBid: highestBid, 
+        highestBidder: highestBidder ? highestBidder.toObject() : null,
       });
     } catch (error) {
       console.error("Error fetching post details:", error);
@@ -338,7 +330,6 @@ class PostController {
     }
   }
 
-  // Thêm feedback từ admin
   async addFeedback(req, res, next) {
     const { id } = req.params;
     const { feedback } = req.body;
@@ -360,7 +351,6 @@ class PostController {
     }
   }
 
-  // Gỡ feedback từ admin
   async removeFeedback(req, res, next) {
     const { id } = req.params;
 
